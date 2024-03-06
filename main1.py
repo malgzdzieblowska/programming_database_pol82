@@ -1,5 +1,6 @@
-from mysql.connector import connect
-from mysql.connector import MySQLConnection
+import mysql.connector
+from mysql.connector import connect, errorcode
+
 
 USER = 'root'
 PASSWORD = 'Db7543!#'
@@ -21,7 +22,27 @@ PASSWORD = 'Db7543!#'
 #cnx.close()
 
 ## Powyżej wykomentowany pierwszy sposób, ale my będziemy używać menadżera kontekstu
-with connect(user=USER, password=PASSWORD) as cnx:
-    with cnx.cursor() as cursor:
-        cursor.execute("""CREATE DATABASE shop2;""")
+"""
+Tak jak poniżej będziemy zawsze tworzyć
+wraz z obsługą błędów
+To jest dla instrukcji DDL tylko!!!!
+"""
 
+CREATE_DATABASE_QUERY = """CREATE DATABASE shop2;"""
+
+try:
+    with connect(user=USER, password=PASSWORD) as cnx:
+        with cnx.cursor() as cursor:
+            cursor.execute(CREATE_DATABASE_QUERY)
+except mysql.connector.Error as err:
+    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        print("Something is wrong with your username or password")
+    elif err.errno == errorcode.ER_BAD_DB_ERROR:
+        print("Database does not exists")
+    elif err.errno == errorcode.ER_PARSE_ERROR:
+        print("SQL syntax error\n",err)
+    else:
+        print("An Error occured\n", err)
+#nie piszemy finally, bo wykonałoby się zawsze. Dajemy else - spróbował, nie było błędów więc Done
+else:
+    print("Done")
